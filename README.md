@@ -1,79 +1,78 @@
 # CLI Corrector
-CLI Corrector est une interface en ligne de commande (CLI) intelligente développée en Python pour aider les développeurs à corriger automatiquement les commandes mal tapées (ex. `gti` → `git`). Elle propose des suggestions rapides, enregistre un historique des corrections, et peut suggérer des alias pour les erreurs fréquentes. Ce projet est open source et conçu pour être simple, rapide et extensible.
+CLI Corrector is an intelligent command-line interface (CLI) developed in Python to help developers automatically fix mistyped commands (e.g. `gti` → `git`). It offers quick suggestions, records a history of corrections, and can suggest aliases for common errors. This project is open source and designed to be simple, fast, and extensible.
 
+## Features
 
-## Fonctionnalités
+- **Autocorrect:** Detects typos in CLI commands using Levenshtein distance.
+- **Smart Suggestions:** Offers similar commands based on installed tools ($PATH).
+- **History:** Stores corrections in a JSON file for future customization.
+- **Aliases :** Recommends shell aliases for repeated errors (e.g. alias `gti`=`git`).
+- **Light and fast :** Optimized for sub-0.5 second runtime.
 
-- **Correction automatique :** Détecte les typos dans les commandes CLI en utilisant la distance de Levenshtein.
-- **Suggestions intelligentes :** Propose des commandes similaires basées sur les outils installés ($PATH).
-- **Historique :** Stocke les corrections dans un fichier JSON pour une personnalisation future.
-- **Alias :** Recommande des alias shell pour les erreurs répétées (ex. alias gti='git').
-- **Léger et rapide :** Optimisé pour une exécution en moins de 0,5 seconde.
+## Prerequisites
 
-## Prérequis
-
-- Python 3.8 ou supérieur
-- Systèmes supportés : Linux, macOS, Windows (WSL recommandé)
-- Bibliothèques Python : prompt_toolkit, difflib (inclus dans Python)
+- Python 3.8 or higher
+- Supported systems: Linux, macOS, Windows (WSL recommended)
+- Python libraries: prompt_toolkit, difflib (included in Python)
 
 ## Installation
 
-1. Clonez le dépôt :
+1. Clone the :
 ```bash
 git clone git@github.com:Salemgnk/cli_corrector.git
 cd cli-corrector
 ```
 
-2. Créez un environnement virtuel (optionnel, recommandé) :
+2. Create a virtual environment (optional, recommended):
 ```bash
 python -m venv venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
+source venv/bin/activate # Linux/macOS
+venv\Scripts\activate # Windows
 ```
 
-3. Installez les dépendances :
+3. Install the dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Lancez la CLI :
+4. Launch the CLI:
 ```bash
 python cli_corrector.py
 ```
 
-
-## Utilisation
-Tapez une commande dans la CLI Corrector, et si elle est mal écrite, une suggestion sera affichée.
-**Exemple :**
-``` bash
+## Usage
+Type a command in the Corrector CLI, and if it's badly written, a suggestion will be displayed.
+**Example:**
+```bash
 $ gti status
-Tu voulais dire 'git status' ?
+Did you mean 'git status'?
 ```
-Pour activer une suggestion, suivez les instructions affichées. L’historique des corrections est sauvegardé dans `cli_corrector_history.json`.
+To activate a suggestion, follow the instructions displayed. Correction history is saved in `cli_corrector_history.json`.
 
-## Contribuer
-Nous accueillons les contributions ! Voici comment commencer :
+## Contribute
+We welcome contributions! Here's how to get started:
 
-1. Forkez le dépôt.
+1. Fork the repository.
 
-2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/nouvelle-fonction`).
+2. Create a branch for your feature (`git checkout -b feature/new-feature`).
 
-3. Committez vos changements (`git commit -m "Ajout de nouvelle fonctionnalité"`).
+3. Commit your changes (`git commit -m “Add new feature”`).
 
-4. Poussez votre branche (`git push origin feature/nouvelle-fonction`).
-Ouvrez une Pull Request.
+4. Push your branch (`git push origin feature/new-function`).
 
-## Feuille de route
+5. Open a Pull Request.
 
-- [] Intégration d’un modèle IA léger pour des suggestions contextuelles.
-- [] Support pour l’analyse des arguments de commande (ex. gti status → git status).
-- [] Interface avec bash/zsh pour une correction en temps réel.
-- [] Génération automatique d’alias dans .bashrc ou .zshrc.
+## Roadmap
 
-## Licence
-Ce projet est sous licence MIT. Vous êtes libre de l’utiliser, le modifier et le distribuer.
+- [] Integration of a lightweight AI model for contextual suggestions.
+- [] Support for parsing command arguments (e.g. gti status → git status).
+- [] Automatic alias generation in .bashrc or .zshrc.
+
+## License
+This project is licensed under the MIT License. You are free to use, modify and distribute it.
 
 ## Contact
-Pour toute question ou suggestion, ouvrez une issue sur GitHub ou contactez `gnandisalem@gmail.com`.
+For questions or suggestions, open an issue on GitHub or contact `gnandisalem@gmail.com`.
 
-⭐ Si vous aimez ce projet, donnez-lui une étoile sur GitHub !
+⭐ If you like this project, give it a star on github.
+
