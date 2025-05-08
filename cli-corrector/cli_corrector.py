@@ -50,3 +50,19 @@ def save_corrections(mistyped, suggested):
     with open(HISTORY_FILE, 'w') as f:
         json.dump(history, f, indent=4)
     return history
+
+def count_corrections(mistyped, suggested, history):
+    "Count the number of corrections made in the history."
+    return sum(1 for entry in history if entry["mistyped"] == mistyped
+               and entry["suggested"] == suggested)
+
+def suggest_correction(mistyped, commands):
+    """Suggest a correction for the mistyped command."""
+    suggestion = difflib.get_close_matches(mistyped, commands, n=1, cutoff=0.6)
+
+def main():
+    print("Welcome to CLI Corrector!")
+
+
+if __name__ == "__main__":
+    main()
