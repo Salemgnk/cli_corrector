@@ -20,7 +20,7 @@ CLI Corrector is an intelligent command-line interface (CLI) developed in Python
 1. Clone the :
 ```bash
 git clone git@github.com:Salemgnk/cli_corrector.git
-cd cli-corrector
+cd cli_corrector
 ```
 
 2. Create a virtual environment (optional, recommended):
