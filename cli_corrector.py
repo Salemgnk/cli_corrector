@@ -1,25 +1,26 @@
 import json
 import os
 import subprocess
+import time
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from rapidfuzz import process, fuzz
 import requests
 from dotenv import load_dotenv
+import getpass
+import datetime
+from prompt_toolkit.formatted_text import HTML
 
-# Load environment variables from .env file
 load_dotenv()
 
 HISTORY_FILE = "cli_corrector_history.json"
 CONFIG_FILE = "cli_corrector_config.json"
 AUTO_CORRECT_THRESHOLD = 3
 
-# Load Gemini API key from environment variables
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 KNOWN_CORRECTIONS = {
-    "sl": "ls",
     "gti": "git",
     "grpe": "grep",
     "cd..": "cd ..",
@@ -82,7 +83,6 @@ def update_history(history, mistyped, suggested):
 
 
 def suggest_command(mistyped, commands):
-    # Check known corrections first
     if mistyped in KNOWN_CORRECTIONS:
         return KNOWN_CORRECTIONS[mistyped]
 
@@ -92,37 +92,27 @@ def suggest_command(mistyped, commands):
         Suggest the correct command from the available commands: {', '.join(commands)}.
         Provide only the correct command without explanation.
         """
-        headers = {
-            "Content-Type": "application/json"
-        }
-        data = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt}
-                    ]
-                }
-            ]
-        }
+        headers = {"Content-Type": "application/json"}
+        data = {"contents": [{"parts": [{"text": prompt.strip()}]}]}
 
         try:
             response = requests.post(
                 f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
                 headers=headers,
-                json=data
+                json=data,
+                timeout=5
             )
             response.raise_for_status()
             result = response.json()
             suggestion = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
             if suggestion in commands:
                 return suggestion
-        except requests.RequestException as e:
-            print(f"Gemini API error: {e}")
+        except requests.RequestException:
+            pass
+        except Exception:
+            pass
 
-    # Fallback to rapidfuzz if both local model and API fail
-    result = process.extractOne(
-        mistyped, commands, scorer=fuzz.ratio, score_cutoff=70
-    )
+    result = process.extractOne(mistyped, commands, scorer=fuzz.ratio, score_cutoff=70)
     return result[0] if result else None
 
 
@@ -133,8 +123,19 @@ def execute_command(command):
             print(result.stdout, end="")
         if result.stderr:
             print(result.stderr, end="")
+        print()
     except subprocess.SubprocessError as e:
         print(f"Execution error: {e}")
+
+
+def smart_clear():
+    print("Auto-correcting to 'clear'... [press Enter or wait 1s]")
+    try:
+        input()
+    except KeyboardInterrupt:
+        pass
+    time.sleep(1)
+    os.system('clear')
 
 
 def propose_alias(mistyped, suggested):
@@ -166,13 +167,19 @@ def add_manual_correction(mistyped, corrected, config, history):
     return True
 
 
+def get_custom_prompt():
+    user = getpass.getuser()
+    cwd = os.getcwd()
+    time_now = datetime.datetime.now().strftime("%H:%M:%S")
+    return HTML(f"<ansicyan>{user}</ansicyan> <ansigreen>{cwd}</ansigreen> <ansiblue>{time_now}</ansiblue> > ")
+
+
 def main():
     available_commands = load_available_commands()
     config = load_config()
     history = load_history()
     session = PromptSession(history=FileHistory(".cli_corrector_prompt_history"))
 
-    # Print command explanation at startup
     print("""
 CLI Corrector - Command Line Interface Correction Tool
 ----------------------------------------------------
@@ -186,14 +193,13 @@ CLI Corrector - Command Line Interface Correction Tool
 
     while True:
         try:
-            user_input = session.prompt("> ").strip()
-            if user_input.lower() == "quit":
+            user_input = session.prompt(get_custom_prompt()).strip()
+            if user_input.lower() == "quit" or user_input.lower() == "exit":
                 break
 
             parts = user_input.split(maxsplit=2)
             cmd = parts[0] if parts else ""
 
-            # Handle manual correction command
             if cmd == "correct" and len(parts) == 3:
                 mistyped, corrected = parts[1], parts[2]
                 add_manual_correction(mistyped, corrected, config, history)
@@ -211,16 +217,25 @@ CLI Corrector - Command Line Interface Correction Tool
             auto_correct = config.get("auto_correct", {})
             if cmd in auto_correct:
                 corrected = f"{auto_correct[cmd]} {args}".strip()
-                print(f"Auto-correcting to: {corrected}")
-                execute_command(corrected)
+                print(f"Auto-correcting '{cmd}' -> '{corrected}'")
+                if corrected.strip() == "clear":
+                    smart_clear()
+                else:
+                    execute_command(corrected)
                 continue
 
             suggestion = suggest_command(cmd, available_commands)
             if suggestion:
                 corrected = f"{suggestion} {args}".strip()
-                print(f"Did you mean: '{corrected}' ? [y/n]")
-                if input().strip().lower() == "y":
-                    execute_command(corrected)
+
+                print(f"Did you mean: '{corrected}' ? [y/n]", end = " ")
+                resp = input().strip().lower()
+
+                if resp == "y":
+                    if corrected.strip() == "clear":
+                        smart_clear()
+                    else:
+                        execute_command(corrected)
                     correction_count = update_history(history, cmd, suggestion)
 
                     if correction_count >= AUTO_CORRECT_THRESHOLD and cmd not in auto_correct:
@@ -243,6 +258,7 @@ CLI Corrector - Command Line Interface Correction Tool
         except Exception as e:
             print(f"Error: {e}")
     print("Goodbye !")
+
 
 if __name__ == "__main__":
     main()

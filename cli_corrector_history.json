@@ -1,7 +1,12 @@
 {
-  "sl -> ls": 2,
   "clar -> clear": 1,
-  "gti -> git": 1,
+  "gti -> git": 3,
   "mkdri -> mkdir": 1,
-  "ven -> env": 1
+  "ven -> env": 1,
+  "pas -> ps": 1,
+  "claer -> clear": 1,
+  "touhc -> touch": 2,
+  "daet -> date": 3,
+  "mdkir -> mkdir": 1,
+  "clera -> clear": 2
 }

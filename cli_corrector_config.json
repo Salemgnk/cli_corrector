@@ -1,6 +1,7 @@
 {
   "auto_correct": {
     "clar": "clear",
-    "sl": "ls"
+    "gti": "git",
+    "daet": "date"
   }
 }
