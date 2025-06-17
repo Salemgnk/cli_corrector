@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import time
+import sys
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from rapidfuzz import process, fuzz
@@ -130,10 +131,6 @@ def execute_command(command):
 
 def smart_clear():
     print("Auto-correcting to 'clear'... [press Enter or wait 1s]")
-    try:
-        input()
-    except KeyboardInterrupt:
-        pass
     time.sleep(1)
     os.system('clear')
 
@@ -167,6 +164,40 @@ def add_manual_correction(mistyped, corrected, config, history):
     return True
 
 
+def print_stats(history, config):
+    print("\n📊 CLI Correction Stats\n")
+    reverse_map = {}
+
+    for key, count in history.items():
+        if "->" not in key:
+            continue
+        mistyped, corrected = [x.strip() for x in key.split("->")]
+        reverse_map.setdefault(corrected, {})[mistyped] = count
+
+    if not reverse_map:
+        print("No correction history found.")
+    else:
+        print("🔁 Frequent corrected commands:\n")
+        for corrected_cmd, mistyped_map in reverse_map.items():
+            sorted_mistyped = sorted(mistyped_map.items(), key=lambda x: x[1], reverse=True)
+            formatted = ", ".join(f"{mistyped} ({count})" for mistyped, count in sorted_mistyped)
+            print(f"{corrected_cmd} ← {formatted}")
+        print()
+
+    auto_correct = config.get("auto_correct", {})
+    if auto_correct:
+        print("⚙️  Auto-corrections enabled:\n")
+        for mistyped, corrected in auto_correct.items():
+            print(f"{mistyped} → {corrected}")
+        print()
+
+    if KNOWN_CORRECTIONS:
+        print("📚 Known corrections:\n")
+        for mistyped, corrected in KNOWN_CORRECTIONS.items():
+            print(f"{mistyped} → {corrected}")
+        print()
+
+
 def get_custom_prompt():
     user = getpass.getuser()
     cwd = os.getcwd()
@@ -185,17 +216,20 @@ CLI Corrector - Command Line Interface Correction Tool
 ----------------------------------------------------
 - Enter a command to execute it or get correction suggestions.
 - Type 'correct <mistyped> <corrected>' to manually add a correction (e.g., 'correct sl ls').
-- Type 'quit' to exit the program.
-- If a command is mistyped, the tool suggests corrections using a local model, Gemini API (if configured), or fuzzy matching.
-- Corrections used frequently (3+ times) can be set to auto-correct or saved as shell aliases.
+- Type 'stats' to see correction statistics.
+- Type 'quit' or 'exit' to leave the program.
 ----------------------------------------------------
     """)
 
     while True:
         try:
             user_input = session.prompt(get_custom_prompt()).strip()
-            if user_input.lower() == "quit" or user_input.lower() == "exit":
+            if user_input.lower() in {"quit", "exit"}:
                 break
+
+            if user_input.lower() == "stats":
+                print_stats(history, config)
+                continue
 
             parts = user_input.split(maxsplit=2)
             cmd = parts[0] if parts else ""
@@ -211,6 +245,8 @@ CLI Corrector - Command Line Interface Correction Tool
                 continue
 
             if cmd in available_commands:
+                if cmd == "clear":
+                    smart_clear()
                 execute_command(user_input)
                 continue
 
@@ -228,7 +264,7 @@ CLI Corrector - Command Line Interface Correction Tool
             if suggestion:
                 corrected = f"{suggestion} {args}".strip()
 
-                print(f"Did you mean: '{corrected}' ? [y/n]", end = " ")
+                print(f"Did you mean: '{corrected}' ? [y/n]", end=" ")
                 resp = input().strip().lower()
 
                 if resp == "y":
