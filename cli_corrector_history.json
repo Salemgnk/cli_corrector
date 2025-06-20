@@ -8,5 +8,6 @@
   "touhc -> touch": 2,
   "daet -> date": 3,
   "mdkir -> mkdir": 1,
-  "clera -> clear": 2
+  "clera -> clear": 2,
+  "cd.. -> cd ..": 3
 }

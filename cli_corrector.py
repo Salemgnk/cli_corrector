@@ -1,15 +1,15 @@
-import json
 import os
-import subprocess
-import time
 import sys
+import time
+import json
+import getpass
+import requests
+import datetime
+import subprocess
+from dotenv import load_dotenv
+from rapidfuzz import process, fuzz
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
-from rapidfuzz import process, fuzz
-import requests
-from dotenv import load_dotenv
-import getpass
-import datetime
 from prompt_toolkit.formatted_text import HTML
 
 load_dotenv()
@@ -31,6 +31,7 @@ KNOWN_CORRECTIONS = {
     "exiy": "exit",
 }
 
+BUILTIN_COMMANDS = {"cd", "exit", "clear", "alias", "unalias"}
 
 def load_available_commands():
     commands = set()
@@ -119,12 +120,7 @@ def suggest_command(mistyped, commands):
 
 def execute_command(command):
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        if result.stdout:
-            print(result.stdout, end="")
-        if result.stderr:
-            print(result.stderr, end="")
-        print()
+        subprocess.run(command, shell=True)
     except subprocess.SubprocessError as e:
         print(f"Execution error: {e}")
 
@@ -151,7 +147,7 @@ def propose_alias(mistyped, suggested):
 
 
 def add_manual_correction(mistyped, corrected, config, history):
-    if corrected not in load_available_commands():
+    if corrected not in load_available_commands() and corrected.split()[0] not in BUILTIN_COMMANDS:
         print(f"Error: '{corrected}' is not a valid command.")
         return False
     KNOWN_CORRECTIONS[mistyped] = corrected
@@ -244,10 +240,30 @@ CLI Corrector - Command Line Interface Correction Tool
             if not cmd:
                 continue
 
+            # === GESTION DES COMMANDES INTERNES ===
+            if cmd == "cd":
+                path = args if args else os.path.expanduser("~")
+                try:
+                    os.chdir(path)
+                except FileNotFoundError:
+                    print(f"No such directory: {path}")
+                except Exception as e:
+                    print(f"cd error: {e}")
+                continue
+
+            if cmd == "exit":
+                print("Goodbye !")
+                break
+
+            if cmd == "clear":
+                smart_clear()
+                continue
+
             if cmd in available_commands:
                 if cmd == "clear":
                     smart_clear()
-                execute_command(user_input)
+                else:
+                    execute_command(user_input)
                 continue
 
             auto_correct = config.get("auto_correct", {})

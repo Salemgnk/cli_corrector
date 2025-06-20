@@ -2,6 +2,7 @@
   "auto_correct": {
     "clar": "clear",
     "gti": "git",
-    "daet": "date"
+    "daet": "date",
+    "cd..": "cd .."
   }
 }
