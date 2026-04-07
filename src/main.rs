@@ -24,6 +24,11 @@ enum Commands {
     Stats,
     /// Manually add a correction
     Correct { mistyped: String, corrected: String },
+    /// Print the shell integration script
+    Init {
+        #[arg(value_parser = ["zsh", "bash"])]
+        shell: String,
+    },
 }
 
 #[tokio::main]
@@ -46,6 +51,24 @@ async fn main() {
                 .insert(mistyped.clone(), corrected.clone());
             config::save_config(&config);
             println!("Manual correction added: {} -> {}", mistyped, corrected);
+            return;
+        }
+        Some(Commands::Init { shell }) => {
+            if shell == "zsh" {
+                println!(
+                    r#"command_not_found_handler() {{
+    cli_corrector "$@"
+    return $?
+}}"#
+                );
+            } else if shell == "bash" {
+                println!(
+                    r#"command_not_found_handle() {{
+    cli_corrector "$@"
+    return $?
+}}"#
+                );
+            }
             return;
         }
         None => {
@@ -131,11 +154,15 @@ async fn main() {
 }
 
 fn execute_command(command: &str) {
-    let status = Command::new("sh").arg("-c").arg(command).status();
+    let mut child = Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .spawn()
+        .expect("Failed to execute command");
 
-    match status {
-        Ok(s) if !s.success() => eprintln!("Command failed with status: {}", s),
-        Err(e) => eprintln!("Execution error: {}", e),
-        _ => {}
+    let status = child.wait().expect("Failed to wait on child");
+
+    if !status.success() {
+        eprintln!("Command failed with status: {}", status);
     }
 }
