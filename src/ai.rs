@@ -18,7 +18,11 @@ pub async fn suggest_command_llm(mistyped: &str, commands: &[String]) -> Option<
         commands.join(", ")
     );
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap_or_else(|_| Client::new());
+
     let payload = json!({
         "contents": [{
             "parts": [{"text": prompt}]
