@@ -1,78 +1,96 @@
 # CLI Corrector
-CLI Corrector is an intelligent command-line interface (CLI) developed in Python to help developers automatically fix mistyped commands (e.g. `gti` → `git`). It offers quick suggestions, records a history of corrections, and can suggest aliases for common errors. This project is open source and designed to be simple, fast, and extensible.
+
+CLI Corrector is an intelligent command-line interface (CLI) rewritten in **Rust** to help developers automatically fix mistyped commands (e.g., `gti` → `git`). It offers lightning-fast suggestions, records a history of corrections, and can automatically execute corrected commands.
+
+This new Rust version replaces the old Python REPL, acting as a native CLI utility that you can easily integrate into your shell.
 
 ## Features
 
-- **Autocorrect:** Detects typos in CLI commands using Levenshtein distance.
-- **Smart Suggestions:** Offers similar commands based on installed tools ($PATH).
-- **History:** Stores corrections in a JSON file for future customization.
-- **Aliases :** Recommends shell aliases for repeated errors (e.g. alias `gti`=`git`).
-- **Light and fast :** Optimized for sub-0.5 second runtime.
+- **Blazing Fast:** Written in Rust, it launches and executes in milliseconds.
+- **Fuzzy Matching:** Detects typos using Levenshtein distance.
+- **Smart AI Suggestions:** Can use Gemini API for advanced, context-aware corrections.
+- **Auto-Learning:** If you make the same typo 3 times, it offers to auto-correct it permanently.
+- **Native Integration:** Instead of a REPL, pass your failed command directly to the tool.
 
 ## Prerequisites
 
-- Python 3.8 or higher
-- Supported systems: Linux, macOS, Windows (WSL recommended)
-- Python libraries: prompt_toolkit, difflib (included in Python)
+- [Rust & Cargo](https://rustup.rs/)
 
 ## Installation
 
-1. Clone the :
+1. Clone the repository:
 ```bash
 git clone git@github.com:Salemgnk/cli_corrector.git
 cd cli_corrector
 ```
 
-2. Create a virtual environment (optional, recommended):
+2. Build and install the binary globally using Cargo:
 ```bash
-python -m venv venv
-source venv/bin/activate # Linux/macOS
-venv\Scripts\activate # Windows
+cargo install --path .
 ```
 
-3. Install the dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Launch the CLI:
-```bash
-python cli_corrector.py
-```
+*Note: Ensure your `~/.cargo/bin` is in your `$PATH`.*
 
 ## Usage
-Type a command in the Corrector CLI, and if it's badly written, a suggestion will be displayed.
-**Example:**
+
+Instead of launching a separate prompt, you pass the mistyped command directly to `cli_corrector`:
+
 ```bash
-$ gti status
-Did you mean 'git status'?
+$ cli_corrector gti status
+Did you mean: 'git status' ? [y/N] y
+... (git status output) ...
 ```
-To activate a suggestion, follow the instructions displayed. Correction history is saved in `cli_corrector_history.json`.
+
+If you type the same error 3 times, the tool will ask to enable auto-correction:
+```bash
+'gti' has been corrected to 'git' 3 times. Enable auto-correction? [y/N]
+```
+
+### Manual Corrections
+
+You can manually add a permanent correction:
+```bash
+$ cli_corrector correct sl ls
+Manual correction added: sl -> ls
+```
+
+Now, running `cli_corrector sl` will automatically execute `ls`.
+
+## Shell Integration (Alias)
+
+To make it even faster, you can alias it in your `~/.bashrc` or `~/.zshrc`:
+```bash
+alias c="cli_corrector"
+```
+So you can just type:
+```bash
+$ c gti status
+```
+
+## AI Suggestions (Gemini)
+
+To enable smart suggestions via Google's Gemini, simply export your API key before running:
+
+```bash
+export GEMINI_API_KEY="your_api_key_here"
+```
+
+The tool will query the LLM first. If it fails or no key is provided, it instantly falls back to local fuzzy matching.
+
+## Configuration & History
+
+Your configuration (auto-corrections) and history are now stored safely in your user folder:
+- Linux/macOS: `~/.config/cli_corrector/`
+- Windows: `C:\Users\Username\AppData\Roaming\cli_corrector\`
 
 ## Contribute
-We welcome contributions! Here's how to get started:
+We welcome contributions!
 
 1. Fork the repository.
-
-2. Create a branch for your feature (`git checkout -b feature/new-feature`).
-
-3. Commit your changes (`git commit -m “Add new feature”`).
-
-4. Push your branch (`git push origin feature/new-function`).
-
+2. Create a branch (`git checkout -b feature/new-feature`).
+3. Commit your changes.
+4. Push your branch.
 5. Open a Pull Request.
 
-## Roadmap
-
-- [] Integration of a lightweight AI model for contextual suggestions.
-- [] Support for parsing command arguments (e.g. gti status → git status).
-- [] Automatic alias generation in .bashrc or .zshrc.
-
 ## License
-This project is licensed under the MIT License. You are free to use, modify and distribute it.
-
-## Contact
-For questions or suggestions, open an issue on GitHub or contact `gnandisalem@gmail.com`.
-
-⭐ If you like this project, give it a star on github.
-
+MIT License.
