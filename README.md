@@ -33,10 +33,26 @@ cargo install --path .
 
 ## Usage
 
-Instead of launching a separate prompt, you pass the mistyped command directly to `cli_corrector`:
+The best way to use `cli_corrector` is to integrate it natively into your shell. This way, you don't even need to call the tool yourself, and you keep **100% of your current shell features** (auto-completion, syntax highlighting, plugins, etc.).
 
+When you type a command that doesn't exist, your shell will automatically trigger `cli_corrector` to help you.
+
+### Zsh Integration
+Add this line to the end of your `~/.zshrc`:
 ```bash
-$ cli_corrector gti status
+eval "$(cli_corrector init zsh)"
+```
+
+### Bash Integration
+Add this line to the end of your `~/.bashrc`:
+```bash
+eval "$(cli_corrector init bash)"
+```
+
+### Example
+Now, just type normally in your shell:
+```bash
+$ gti status
 Did you mean: 'git status' ? [y/N] y
 ... (git status output) ...
 ```
@@ -47,25 +63,12 @@ If you type the same error 3 times, the tool will ask to enable auto-correction:
 ```
 
 ### Manual Corrections
-
 You can manually add a permanent correction:
 ```bash
 $ cli_corrector correct sl ls
 Manual correction added: sl -> ls
 ```
-
-Now, running `cli_corrector sl` will automatically execute `ls`.
-
-## Shell Integration (Alias)
-
-To make it even faster, you can alias it in your `~/.bashrc` or `~/.zshrc`:
-```bash
-alias c="cli_corrector"
-```
-So you can just type:
-```bash
-$ c gti status
-```
+Now, if you type `sl` in your shell, it will instantly run `ls`.
 
 ## AI Suggestions (Gemini)
 
