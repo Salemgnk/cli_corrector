@@ -101,16 +101,24 @@ async fn main() {
 
     let available = commands::load_available_commands();
 
+    let full_mistyped_cmd = cli.mistyped.join(" ");
+
     // 2. Try LLM first
-    let mut suggestion = ai::suggest_command_llm(cmd_name, &available).await;
+    let mut llm_used = true;
+    let mut suggestion = ai::suggest_command_llm(&full_mistyped_cmd, &available).await;
 
     // 3. Fallback to local fuzzy matching
     if suggestion.is_none() {
+        llm_used = false;
         suggestion = commands::suggest_command_local(cmd_name, &available);
     }
 
     if let Some(suggested_cmd) = suggestion {
-        let full_suggested = if cmd_args.is_empty() {
+        // If LLM was used, suggested_cmd is the full corrected phrase (including args).
+        // If fallback was used, suggested_cmd is just the main command, so we re-attach args.
+        let full_suggested = if llm_used {
+            suggested_cmd.clone()
+        } else if cmd_args.is_empty() {
             suggested_cmd.clone()
         } else {
             format!("{} {}", suggested_cmd, cmd_args)
@@ -140,11 +148,18 @@ async fn main() {
         if input.trim().eq_ignore_ascii_case("y") {
             execute_command(&full_suggested);
 
-            let count = config::update_history(&mut history, cmd_name, &suggested_cmd);
+            // Pour l'historique et l'auto-correction, on garde uniquement la commande principale.
+            // Extraire le mot principal de full_suggested (au cas où LLM a corrigé toute la phrase)
+            let main_suggested_cmd = full_suggested
+                .split_whitespace()
+                .next()
+                .unwrap_or(&suggested_cmd);
+
+            let count = config::update_history(&mut history, cmd_name, main_suggested_cmd);
             if count >= 3 && !config.auto_correct.contains_key(cmd_name) {
                 print!(
                     "'{}' has been corrected to '{}' {} times. Enable auto-correction? [y/N] ",
-                    cmd_name, suggested_cmd, count
+                    cmd_name, main_suggested_cmd, count
                 );
                 let _ = io::stdout().flush();
                 let mut auto_input = String::new();
@@ -165,11 +180,11 @@ async fn main() {
                 if auto_input.trim().eq_ignore_ascii_case("y") {
                     config
                         .auto_correct
-                        .insert(cmd_name.clone(), suggested_cmd.clone());
+                        .insert(cmd_name.clone(), main_suggested_cmd.to_string());
                     config::save_config(&config);
                     println!(
                         "Auto-correction enabled: '{}' -> '{}'",
-                        cmd_name, suggested_cmd
+                        cmd_name, main_suggested_cmd
                     );
                 }
             }
