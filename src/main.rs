@@ -120,7 +120,22 @@ async fn main() {
         let _ = io::stdout().flush();
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
+        // Dans certains contextes de shell hook, stdin n'est pas le terminal.
+        // On essaie d'ouvrir /dev/tty pour forcer l'interaction, sinon on repli sur stdin.
+        if let Ok(mut tty) = std::fs::File::open("/dev/tty") {
+            use std::io::Read;
+            let mut buf = [0; 1];
+            while tty.read(&mut buf).unwrap_or(0) > 0 {
+                let c = buf[0] as char;
+                if c == '\n' || c == '\r' {
+                    break;
+                }
+                input.push(c);
+            }
+            println!(); // saut de ligne après saisie
+        } else {
+            io::stdin().read_line(&mut input).unwrap_or(0);
+        }
 
         if input.trim().eq_ignore_ascii_case("y") {
             execute_command(&full_suggested);
@@ -133,7 +148,20 @@ async fn main() {
                 );
                 let _ = io::stdout().flush();
                 let mut auto_input = String::new();
-                io::stdin().read_line(&mut auto_input).unwrap();
+                if let Ok(mut tty) = std::fs::File::open("/dev/tty") {
+                    use std::io::Read;
+                    let mut buf = [0; 1];
+                    while tty.read(&mut buf).unwrap_or(0) > 0 {
+                        let c = buf[0] as char;
+                        if c == '\n' || c == '\r' {
+                            break;
+                        }
+                        auto_input.push(c);
+                    }
+                    println!();
+                } else {
+                    io::stdin().read_line(&mut auto_input).unwrap_or(0);
+                }
                 if auto_input.trim().eq_ignore_ascii_case("y") {
                     config
                         .auto_correct
