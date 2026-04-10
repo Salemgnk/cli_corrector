@@ -1,0 +1,3 @@
+## 2025-04-10 - Rust std::fs::read_dir Traversal Optimization
+**Learning:** When traversing directories using `std::fs::read_dir` in Rust, calling `entry.path().is_file()` inside the loop introduces significant overhead. It performs an additional `stat` system call to determine the file type and causes unnecessary `PathBuf` allocations for each entry.
+**Action:** Use `entry.file_type()` instead. It relies on the file type information often already provided by the `read_dir` system call (like `getdents64` on Linux), avoiding extra `stat` calls and allocations. Check `if let Ok(file_type) = entry.file_type()` and then `file_type.is_file() || file_type.is_symlink()`.
