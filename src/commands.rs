@@ -11,13 +11,27 @@ pub fn load_available_commands() -> Vec<String> {
         for path in env::split_paths(&path_var) {
             if let Ok(entries) = fs::read_dir(path) {
                 for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() {
-                        if let Some(name_str) = path.file_name().and_then(|f| f.to_str()) {
-                            // En Rust, la vérification d'exécutabilité dépend de l'OS.
-                            // Pour faire simple, on ajoute tous les fichiers du $PATH
-                            // On pourrait affiner avec std::os::unix::fs::PermissionsExt
-                            commands.insert(name_str.to_string());
+                    // ⚡ Bolt Optimization: Using `entry.file_type()` and `entry.file_name()`
+                    // avoids redundant 'stat' system calls and 'PathBuf' allocations.
+                    // IMPORTANT: We must still handle symlinks by falling back to `entry.path().is_file()`,
+                    // since `file_type()` does not follow symlinks, and many commands in $PATH are symlinks.
+                    #[allow(clippy::collapsible_if)]
+                    if let Ok(file_type) = entry.file_type() {
+                        let is_file = if file_type.is_file() {
+                            true
+                        } else if file_type.is_symlink() {
+                            entry.path().is_file()
+                        } else {
+                            false
+                        };
+
+                        if is_file {
+                            if let Some(name_str) = entry.file_name().to_str() {
+                                // En Rust, la vérification d'exécutabilité dépend de l'OS.
+                                // Pour faire simple, on ajoute tous les fichiers du $PATH
+                                // On pourrait affiner avec std::os::unix::fs::PermissionsExt
+                                commands.insert(name_str.to_string());
+                            }
                         }
                     }
                 }
