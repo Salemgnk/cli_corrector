@@ -1,0 +1,3 @@
+## 2024-06-10 - Redundant Stat Calls in Directory Scans
+**Learning:** Checking `entry.path().is_file()` during `fs::read_dir` traversal incurs redundant `stat` system calls, significantly slowing down the scan of large directories (like those in `$PATH`). Additionally, `entry.path().file_name()` causes an unnecessary `PathBuf` heap allocation, whereas `entry.file_name()` does not. Note that `entry.file_type()` does not resolve symlinks, so it requires a fallback to `entry.path().is_file()` if the file is a symlink.
+**Action:** When traversing directories in Rust, use `entry.file_type()` to check for file status (with a symlink fallback) and `entry.file_name()` to extract names, bypassing the slower `entry.path()` method completely.
