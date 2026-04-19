@@ -1,0 +1,3 @@
+## 2024-04-19 - Optimize fs directory traversal
+**Learning:** When traversing directories using `std::fs::read_dir` in Rust, `entry.path().is_file()` performs a redundant `stat` system call. Using `entry.file_type()` gets the file type directly from the directory entry (on platforms that support it) without the extra system call, but requires manual fallback to `entry.path().is_file()` if the type is a symlink. Additionally, `entry.path().file_name()` causes an unnecessary `PathBuf` allocation, whereas `entry.file_name()` does not.
+**Action:** Prefer `entry.file_type()` with a symlink fallback over `entry.path().is_file()` and `entry.file_name()` over `entry.path().file_name()` when scanning directories for performance.
