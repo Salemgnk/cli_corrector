@@ -11,9 +11,23 @@ pub fn load_available_commands() -> Vec<String> {
         for path in env::split_paths(&path_var) {
             if let Ok(entries) = fs::read_dir(path) {
                 for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() {
-                        if let Some(name_str) = path.file_name().and_then(|f| f.to_str()) {
+                    // Bolt: Performance optimization
+                    // Prefer entry.file_type() over entry.path().is_file() to avoid redundant stat calls.
+                    // If it's a symlink, we fallback to path().is_file() to resolve it.
+                    let is_file = match entry.file_type() {
+                        Ok(ft) => {
+                            if ft.is_symlink() {
+                                entry.path().is_file()
+                            } else {
+                                ft.is_file()
+                            }
+                        }
+                        Err(_) => entry.path().is_file(),
+                    };
+
+                    if is_file {
+                        // Bolt: Use entry.file_name() instead of entry.path().file_name() to prevent unnecessary PathBuf allocations.
+                        if let Some(name_str) = entry.file_name().to_str() {
                             // En Rust, la vérification d'exécutabilité dépend de l'OS.
                             // Pour faire simple, on ajoute tous les fichiers du $PATH
                             // On pourrait affiner avec std::os::unix::fs::PermissionsExt
