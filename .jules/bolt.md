@@ -1,0 +1,3 @@
+## 2025-01-08 - Rust's `read_dir` optimizations
+**Learning:** When traversing directories in Rust using `std::fs::read_dir`, using `entry.path().is_file()` causes a redundant `stat` system call because the file type is often already retrieved by the underlying directory iteration API (like `readdir` on Unix).
+**Action:** Always prefer using `entry.file_type()` which avoids the `stat` call if the OS provides the file type in the directory entry. However, since `file_type()` does not follow symlinks, you must fallback to `entry.path().is_file()` to correctly identify files behind symlinks. Additionally, use `entry.file_name()` instead of `entry.path().file_name()` to prevent unnecessary `PathBuf` allocations.
