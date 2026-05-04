@@ -1,0 +1,3 @@
+## 2024-06-25 - Early returns and length check filters before expensive algorithm
+**Learning:** In fuzzy string matching using algorithms like Levenshtein distance (O(m*n)), unconditionally calculating the distance before filtering out strings based on O(1) checks (like length difference) creates a massive performance bottleneck. The overhead becomes particularly extreme when comparing against a large number of system commands loaded from $PATH.
+**Action:** Always filter out candidates using simple, low-cost operations (e.g. `(cmd.len() as isize - mistyped.len() as isize).abs() > threshold`) *before* executing expensive string-distance algorithms.
