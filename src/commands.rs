@@ -11,9 +11,28 @@ pub fn load_available_commands() -> Vec<String> {
         for path in env::split_paths(&path_var) {
             if let Ok(entries) = fs::read_dir(path) {
                 for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() {
-                        if let Some(name_str) = path.file_name().and_then(|f| f.to_str()) {
+                    // Bolt Optimization:
+                    // Use `entry.file_type()` instead of `entry.path().is_file()`.
+                    // `entry.file_type()` gets file metadata from the directory entry
+                    // (when supported by the OS), avoiding a redundant `stat` syscall.
+                    // We only fallback to `entry.path().is_file()` for symlinks to
+                    // correctly resolve the target's type.
+                    let is_file = if let Ok(file_type) = entry.file_type() {
+                        if file_type.is_symlink() {
+                            entry.path().is_file()
+                        } else {
+                            file_type.is_file()
+                        }
+                    } else {
+                        false
+                    };
+
+                    if is_file {
+                        // Bolt Optimization:
+                        // Use `entry.file_name()` instead of `entry.path().file_name()`.
+                        // `entry.path()` creates a new `PathBuf` allocation, whereas
+                        // `entry.file_name()` returns an `OsString` directly.
+                        if let Some(name_str) = entry.file_name().to_str() {
                             // En Rust, la vérification d'exécutabilité dépend de l'OS.
                             // Pour faire simple, on ajoute tous les fichiers du $PATH
                             // On pourrait affiner avec std::os::unix::fs::PermissionsExt
