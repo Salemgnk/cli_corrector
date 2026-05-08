@@ -1,0 +1,3 @@
+## 2024-05-15 - Short-circuiting O(N*M) Levenshtein distances
+**Learning:** Performing an O(N*M) string distance algorithm (like Levenshtein) on a large list of candidates is slow. In `src/commands.rs`, the code calculates the distance for *every* command in the `$PATH` before discarding matches whose length difference exceeds the threshold of 3.
+**Action:** Move O(1) length difference checks *before* the expensive O(N*M) distance calculations. This short-circuits the operation, immediately discarding invalid candidates and significantly speeding up fuzzy matching without changing the results.
