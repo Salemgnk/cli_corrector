@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimize PATH directory traversal
+**Learning:** In Rust, `fs::read_dir` returns `DirEntry` items that contain file type information directly on Unix systems, accessible via `.file_type()`. Using `.path().is_file()` forces an expensive `stat` system call and allocates a `PathBuf`.
+**Action:** Always prefer inspecting `entry.file_type()` over `entry.path().is_file()` during directory traversal, and fall back to `entry.path().is_file()` only if the file type is a symlink. Also, use `entry.file_name()` instead of `entry.path().file_name()` to extract the file name directly without allocating a `PathBuf`.
