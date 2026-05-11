@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimize PATH directory traversal with entry.file_type()
+**Learning:** Using `entry.path().is_file()` during deep directory traversals (like scanning all `$PATH` directories) requires an additional expensive `stat` system call and `PathBuf` allocation for every entry. `entry.file_type()` gets the file type directly from the directory entry metadata (e.g. dirent structure in Unix) mostly for free, which is significantly faster.
+**Action:** Always prefer `entry.file_type()` over `entry.path().is_file()` or `entry.path().metadata()` when iterating over `fs::read_dir`, and fall back to `entry.path().is_file()` only if `file_type().is_symlink()` is true. Also prefer `entry.file_name()` over `entry.path().file_name()` to avoid `PathBuf` overhead.
