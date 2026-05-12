@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimize PATH directory traversal
+**Learning:** Checking `is_file()` directly on `entry.path()` incurs an expensive `stat` system call per file, which severely bottlenecks `load_available_commands` as it traverses the entire $PATH. We also learned from previous anti-patterns that checking executable permissions (`entry.metadata()` or `std::os::unix::fs::PermissionsExt`) suffers from the same `stat` penalty.
+**Action:** Use `entry.file_type()` which utilizes the fast `d_type` field from the underlying OS `dirent` structure, avoiding the `stat` call entirely (except for a fallback on symlinks). Additionally, use `entry.file_name()` instead of `entry.path().file_name()` to prevent unnecessary `PathBuf` allocations.
