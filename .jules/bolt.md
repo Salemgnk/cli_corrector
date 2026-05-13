@@ -1,0 +1,3 @@
+## 2024-05-14 - Optimize Directory Traversal in Rust
+**Learning:** Checking for executable permissions with `PermissionsExt` or calling `path.is_file()` directly on a `PathBuf` from a directory traversal triggers expensive `stat`/`lstat` system calls. This makes iterating over large directories like those in `$PATH` very slow.
+**Action:** Use `entry.file_type()` which utilizes the metadata already fetched during directory reading on most operating systems. Use `entry.file_name()` instead of `entry.path().file_name()` to avoid redundant `PathBuf` allocations. Fallback to `entry.path().is_file()` only if the entry is a symlink.
