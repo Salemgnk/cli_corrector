@@ -50,11 +50,13 @@ pub fn suggest_command_local(mistyped: &str, commands: &[String]) -> Option<Stri
     let mut best_score = usize::MAX; // distance la plus petite = meilleur score
 
     for cmd in commands {
-        let distance = levenshtein(mistyped, cmd);
+        // Optimization: Perform cheap O(1) length difference check before expensive O(M*N) Levenshtein calculation.
         // Si la commande est beaucoup plus longue ou plus courte, on ignore
         if (cmd.len() as isize - mistyped.len() as isize).abs() > 3 {
             continue;
         }
+
+        let distance = levenshtein(mistyped, cmd);
 
         // 3 est un seuil arbitraire pour la distance de Levenshtein
         if distance < best_score && distance <= 3 {
